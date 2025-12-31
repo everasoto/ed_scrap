@@ -194,6 +194,19 @@ df_diario["snapshot_date"] = datetime.now().date()
 # Section extraction
 df_diario["section_url"] = df_diario["url"].apply(extract_section)
 
-# Saving the initial run
-today = datetime.now().date()
-df_diario.to_csv(f"ed_news/initial_scrapping_ed_{today}.csv", index=False)
+from sqlalchemy import create_engine
+import os
+
+# Load the connection string from GitHub Actions
+db_url = os.getenv("SUPABASE_DB_URL")
+
+# Create the engine
+engine = create_engine(db_url)
+
+# Insert your DataFrame into the table
+df_diario.to_sql(
+    "news_articles",
+    engine,
+    if_exists="append",
+    index=False
+)
