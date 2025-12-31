@@ -134,12 +134,30 @@ meses = {
 }
 
 def parse_fecha(texto):
-    partes = texto.split()
-    dia = partes[0]
-    mes = meses[partes[2]]
-    anio = partes[4]
-    hora = partes[-1]
-    return datetime.strptime(f"{dia}-{mes}-{anio} {hora}", "%d-%m-%Y %H:%M")
+    # 1. Si es NaN, None o no es string → devolver None o pd.NaT
+    if not isinstance(texto, str):
+        return None  # o pd.NaT si prefieres
+
+    texto = texto.strip()
+    if not texto:
+        return None
+
+    # 2. Intentar parsear normalmente
+    try:
+        partes = texto.split()
+        dia = partes[0]
+        mes = meses.get(partes[2], None)
+        anio = partes[4]
+        hora = partes[-1]
+
+        if mes is None:
+            return None
+
+        return datetime.strptime(f"{dia}-{mes}-{anio} {hora}", "%d-%m-%Y %H:%M")
+
+    except Exception:
+        # 3. Si algo raro pasa, no romper el scraper
+        return None
 
 # Section extraction from url
 def extract_section(url):
@@ -210,4 +228,5 @@ df_diario.to_sql(
     if_exists="append",
     index=False
 )
+
 
