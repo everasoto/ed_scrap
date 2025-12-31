@@ -210,3 +210,4 @@ df_diario.to_sql(
     if_exists="append",
     index=False
 )
+
