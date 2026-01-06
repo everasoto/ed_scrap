@@ -213,27 +213,23 @@ df_diario["snapshot_date"] = datetime.now().date()
 # Section extraction
 df_diario["section_url"] = df_diario["url"].apply(extract_section)
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, MetaData, Table
+from sqlalchemy.dialects.postgresql import insert
 import os
 
-# Load the connection string from GitHub Actions
+# Load connection string
 db_url = os.getenv("SUPABASE_DB_URL")
 
-# Create the engine
+# Create engine
 engine = create_engine(db_url)
 
-# Insert your DataFrame into the table
-df_diario.to_sql(
-    "news_articles",
-    engine,
-    if_exists="append",
-    index=False,
-    dtype={
-        "headline": Text,
-        "subheadline": Text,
-        "content": Text,
-        "url": Text,
-        "section": Text
-    }
-)
+# Reflect the existing table from Supabase
+metadata = MetaData()
+news_articles = Table("news_articles", metadata, autoload_with=engine)
 
+# Insert each row with ON CONFLICT DO NOTHING
+with engine.begin() as conn:
+    for _, row in df_diario.iterrows():
+        stmt = insert(news_articles).values(row.to_dict())
+        stmt = stmt.on_conflict_do_nothing(index_elements=["url"])
+        conn.execute(stmt)
