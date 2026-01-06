@@ -226,7 +226,12 @@ df_diario.to_sql(
     "news_articles",
     engine,
     if_exists="append",
-    index=False
+    index=False,
+    dtype={
+        "headline": Text,
+        "subheadline": Text,
+        "content": Text,
+        "url": Text,
+        "section": Text
+    }
 )
-
-
