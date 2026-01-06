@@ -7,6 +7,7 @@ import unicodedata
 from urllib.parse import urljoin
 from datetime import datetime
 from urllib.parse import urlparse
+from sqlalchemy.types import Text
 
 # Text cleaning function
 def clean_text(text: str) -> str:
@@ -235,3 +236,4 @@ df_diario.to_sql(
         "section": Text
     }
 )
+
