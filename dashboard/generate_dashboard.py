@@ -1,5 +1,6 @@
 import pandas as pd
 import plotly.express as px
+import plotly.colors as pc
 from sqlalchemy import create_engine
 from jinja2 import Template
 import os
@@ -34,54 +35,60 @@ latest_summary_html = f"""
 # -----------------------------
 # 2. Historical: articles per section
 # -----------------------------
-df["month"] = df["datetime"].dt.to_period("M").astype(str)
+
+# Automatically create a color map for sections
+sections = sorted(df["section_url"].unique())
+palette = pc.qualitative.Dark24
+color_map = {section: palette[i % len(palette)] for i, section in enumerate(sections)}
+
+df["month"] = df["date"].dt.to_period("M").dt.to_timestamp()
+df["month_label"] = df["date"].dt.strftime("%b %Y").str.capitalize()
 
 section_history = (
-    df.groupby(["month", "section_url"])
+    df.groupby(["month", "month_label", "section_url"])
       .size()
       .reset_index(name="count")
 )
 
 fig_section_history = px.bar(
     section_history,
-    x="month",
+    x="month_label",
     y="count",
     color="section_url",
-    title="Histórico de artículos por sección"
+    title="Histórico de artículos por sección",
+    barmode="stack",
+    color_discrete_map=color_map
 )
+fig_section_history.update_layout(legend_title_text=None)
+fig_section_history.update_xaxes(categoryorder="array",
+                                 categoryarray=section_history["month"].sort_values().unique())
 
 section_history_json = fig_section_history.to_json()
 
 # -----------------------------
 # 3. Daily article count
 # -----------------------------
-df["date"] = df["datetime"].dt.date
+evolution = df.groupby(["section_url", "date"]).size().reset_index(name="counts")
 
-daily_counts = df.groupby(["date", "section_url"]).size().reset_index(name="count")
-
-fig_daily = px.bar(
-    daily_counts,
-    x="date",
-    y="count",
-    color="section_url",
-    title="Artículos por día y sección"
-)
+fig_daily = px.bar(evolution, x="date", y="counts", color="section_url", title="Number of Articles by Section Over Time",
+             color_discrete_map=color_map)
+fig_daily.update_layout(legend_title_text=None)
+fig_daily.update_xaxes(categoryorder="array",
+                 categoryarray=section_history["month"].sort_values().unique())
 
 daily_counts_json = fig_daily.to_json()
 
 # -----------------------------
 # 4. Pie chart: section distribution
 # -----------------------------
-section_dist = df["section_url"].value_counts().reset_index()
-section_dist.columns = ["section_url", "count"]
+distribution = df['section_url'].value_counts().reset_index()
+distribution.columns = ['section_url', 'counts']
+distribution = distribution.sort_values(by='section_url')
 
-fig_pie = px.pie(
-    section_dist,
-    names="section_url",
-    values="count",
-    title="Distribución total por sección",
-    hole=0.3
-)
+fig_pie = px.pie(distribution, names= "section_url",
+             color='section_url', values='counts', title='Distribution of Articles by Section', color_discrete_map=color_map)
+
+fig_pie.update_traces(sort=False)
 
 section_pie_json = fig_pie.to_json()
 
