@@ -5,6 +5,8 @@ from sqlalchemy import create_engine
 import os
 from jinja2 import Template
 
+os.makedirs('docs', exist_ok=True)
+
 # Load DB URL
 db_url = os.getenv("SUPABASE_DB_URL")
 engine = create_engine(db_url)
