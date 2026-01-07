@@ -42,7 +42,7 @@ section_history = (
       .reset_index(name="count")
 )
 
-fig_section_history = px.line(
+fig_section_history = px.bar(
     section_history,
     x="month",
     y="count",
@@ -57,13 +57,14 @@ section_history_json = fig_section_history.to_json()
 # -----------------------------
 df["date"] = df["datetime"].dt.date
 
-daily_counts = df.groupby("date").size().reset_index(name="count")
+daily_counts = df.groupby(["date", "section_url"]).size().reset_index(name="count")
 
-fig_daily = px.line(
+fig_daily = px.bar(
     daily_counts,
     x="date",
     y="count",
-    title="Artículos por día"
+    color="section_url",
+    title="Artículos por día y sección"
 )
 
 daily_counts_json = fig_daily.to_json()
