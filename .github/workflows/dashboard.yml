@@ -22,7 +22,7 @@ jobs:
     
     - name: Install dependencies
       run: |
-        pip install pandas sqlalchemy psycopg2-binary matplotlib seaborn jinja2
+        pip install pandas sqlalchemy psycopg2-binary matplotlib seaborn jinja2 pyplot
     
     - name: Generate dashboard
       env:
