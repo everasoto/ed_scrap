@@ -13,7 +13,7 @@ engine = create_engine(db_url)
 df = pd.read_sql("SELECT * FROM news_articles", engine)
 
 # Convert dates
-df["datetime"] = pd.to_datetime(df["datetime"])
+df["date"] = pd.to_datetime(df["datetime"])
 df["snapshot_date"] = pd.to_datetime(df["snapshot_date"])
 
 # -----------------------------
