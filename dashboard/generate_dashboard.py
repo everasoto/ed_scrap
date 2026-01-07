@@ -1,11 +1,8 @@
 import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
+import plotly.express as px
 from sqlalchemy import create_engine
-import os
 from jinja2 import Template
-
-os.makedirs('docs', exist_ok=True)
+import os
 
 # Load DB URL
 db_url = os.getenv("SUPABASE_DB_URL")
@@ -45,12 +42,15 @@ section_history = (
       .reset_index(name="count")
 )
 
-plt.figure(figsize=(14, 6))
-sns.lineplot(data=section_history, x="month", y="count", hue="section_url")
-plt.xticks(rotation=45)
-plt.tight_layout()
-plt.savefig("docs/section_history.png")
-plt.close()
+fig_section_history = px.line(
+    section_history,
+    x="month",
+    y="count",
+    color="section_url",
+    title="Histórico de artículos por sección"
+)
+
+section_history_json = fig_section_history.to_json()
 
 # -----------------------------
 # 3. Daily article count
@@ -59,24 +59,45 @@ df["date"] = df["datetime"].dt.date
 
 daily_counts = df.groupby("date").size().reset_index(name="count")
 
-plt.figure(figsize=(14, 6))
-sns.lineplot(data=daily_counts, x="date", y="count")
-plt.xticks(rotation=45)
-plt.tight_layout()
-plt.savefig("docs/daily_counts.png")
-plt.close()
+fig_daily = px.line(
+    daily_counts,
+    x="date",
+    y="count",
+    title="Artículos por día"
+)
+
+daily_counts_json = fig_daily.to_json()
 
 # -----------------------------
-# 4. Render HTML dashboard
+# 4. Pie chart: section distribution
+# -----------------------------
+section_dist = df["section_url"].value_counts().reset_index()
+section_dist.columns = ["section_url", "count"]
+
+fig_pie = px.pie(
+    section_dist,
+    names="section_url",
+    values="count",
+    title="Distribución total por sección",
+    hole=0.3
+)
+
+section_pie_json = fig_pie.to_json()
+
+# -----------------------------
+# 5. Render HTML dashboard
 # -----------------------------
 with open("dashboard/templates/index_template.html", "r", encoding="utf-8") as f:
     template = Template(f.read())
 
 html_output = template.render(
-    latest_summary=latest_summary_html
+    latest_summary=latest_summary_html,
+    section_history_json=section_history_json,
+    daily_counts_json=daily_counts_json,
+    section_pie_json=section_pie_json
 )
 
 with open("docs/index.html", "w", encoding="utf-8") as f:
     f.write(html_output)
 
-print("Dashboard generado correctamente.")
+print("Dashboard interactivo generado correctamente.")
