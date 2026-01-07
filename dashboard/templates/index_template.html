@@ -82,8 +82,9 @@
     function renderCharts() {
         document.querySelectorAll(".plotly-graph-div").forEach(div => {
             let fig = JSON.parse(div.dataset.figure);
-            fig.layout.template = getTheme();
-            Plotly.newPlot(div, fig.data, fig.layout);
+            Plotly.newPlot(div, fig.data, {
+            ...fig.layout,
+            template: getTheme()
         });
     }
 
