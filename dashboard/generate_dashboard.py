@@ -71,7 +71,7 @@ section_history_json = fig_section_history.to_json()
 evolution = df.groupby(["section_url", "date"]).size().reset_index(name="counts")
 
 fig_daily = px.bar(evolution, x="date", y="counts", color="section_url", title="Number of Articles by Section Over Time",
-             color_discrete_map=color_map)
+             color_discrete_map=color_map, barmode="stack)
 fig_daily.update_layout(legend_title_text=None)
 fig_daily.update_xaxes(categoryorder="array",
                  categoryarray=section_history["month"].sort_values().unique())
