@@ -6,3 +6,4 @@ beautifulsoup4
 matplotlib
 seaborn
 jinja2
+plotly
