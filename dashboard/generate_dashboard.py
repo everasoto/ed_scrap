@@ -71,7 +71,9 @@ section_history_json = fig_section_history.to_json()
 evolution = df.groupby(["section_url", "date"]).size().reset_index(name="counts")
 
 fig_daily = px.bar(evolution, x="date", y="counts", color="section_url", title="Number of Articles by Section Over Time",
-             color_discrete_map=color_map, barmode="stack")
+                   #color_discrete_map=color_map, 
+                   #barmode="stack"
+                  )
 fig_daily.update_layout(legend_title_text=None)
 fig_daily.update_xaxes(categoryorder="array",
                  categoryarray=section_history["month"].sort_values().unique())
@@ -85,12 +87,20 @@ distribution = df['section_url'].value_counts().reset_index()
 distribution.columns = ['section_url', 'counts']
 distribution = distribution.sort_values(by='section_url')
 
-fig_pie = px.pie(distribution, names= "section_url",
-             color='section_url', values='counts', title='Distribution of Articles by Section', color_discrete_map=color_map)
+# Bar chart of sections
+fig_bar = px.bar(
+    distribution,
+    x="section_url",
+    y="counts",
+    color="section_url",
+    title="Distribution of Articles by Section",
+    color_discrete_map=color_map
+)
 
-fig_pie.update_traces(sort=False)
+# Optional: sort bars in descending order
+fig_bar.update_layout(xaxis={'categoryorder':'total descending'})
 
-section_pie_json = fig_pie.to_json()
+section_bar_json = fig_bar.to_json()
 
 # -----------------------------
 # 5. Render HTML dashboard
