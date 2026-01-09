@@ -112,7 +112,7 @@ html_output = template.render(
     latest_summary=latest_summary_html,
     section_history_json=section_history_json,
     daily_counts_json=daily_counts_json,
-    section_pie_json=section_pie_json
+    section_pie_json=section_bar_json
 )
 
 with open("docs/index.html", "w", encoding="utf-8") as f:
