@@ -81,37 +81,29 @@ def extract_full_article(url: str) -> dict:
     try:
         response = requests.get(url, timeout=10)
         if response.status_code != 200:
-            return {}
+            return {
+                "headline": "",
+                "date_extracted": "",
+                "author": "",
+                "subheadline": "",
+                "content": "",
+                "url": url
+            }
 
         soup = BeautifulSoup(response.text, "html.parser")
 
-        # -------------------------
-        # HEADLINE
-        # -------------------------
         h1 = soup.find("h1")
         headline = clean_text(h1.get_text(strip=True)) if h1 else ""
 
-        # -------------------------
-        # DATE (clean container)
-        # -------------------------
         date_tag = soup.find("div", class_="articulo__fecha")
         date = clean_text(date_tag.get_text(strip=True)) if date_tag else ""
 
-        # -------------------------
-        # AUTHOR (inside first block)
-        # -------------------------
         authors = soup.find("p", class_="autor__firmante")
         author = clean_text(authors.get_text(" ", strip=True)) if authors else ""
 
-        # -------------------------
-        # SUBHEADLINE
-        # -------------------------
         subheadlines = soup.find("div", class_="articulo__intro")
         subheadline = clean_text(subheadlines.get_text(" ", strip=True)) if subheadlines else ""
 
-        # -------------------------
-        # CONTENT
-        # -------------------------
         contents = soup.find("main", class_="articulo__cuerpo")
         content = clean_text(contents.get_text(" ", strip=True)) if contents else ""
 
@@ -125,7 +117,14 @@ def extract_full_article(url: str) -> dict:
         }
 
     except Exception:
-        return {}
+        return {
+            "headline": "",
+            "date_extracted": "",
+            "author": "",
+            "subheadline": "",
+            "content": "",
+            "url": url
+        }
     
 # Date conversion function
 meses = {
@@ -162,13 +161,15 @@ def parse_fecha(texto):
 
 # Section extraction from url
 def extract_section(url):
+    if not isinstance(url, str):
+        return "unknown"
+
     parsed = urlparse(url)
-    path = parsed.path.strip("/")  # e.g. "santa-cruz/basura-acumulada..."
+    path = parsed.path.strip("/")
     if not path:
         return "unknown"
-    
-    first_segment = path.split("/")[0]  # e.g. "santa-cruz"
-    return first_segment.lower()
+
+    return path.split("/")[0].lower()
 
 # Initial scrapping
 pagina_web = "https://eldeber.com.bo/"
@@ -233,3 +234,4 @@ with engine.begin() as conn:
         stmt = insert(news_articles).values(row.to_dict())
         stmt = stmt.on_conflict_do_nothing(index_elements=["url"])
         conn.execute(stmt)
+
