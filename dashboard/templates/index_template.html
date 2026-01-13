@@ -2,48 +2,48 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard de Noticias</title>
 
-    <!-- Plotly -->
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 
-    <!-- Auto light/dark theme -->
     <style>
+        :root {
+            --bg-color: #ffffff;
+            --text-color: #222222;
+            --card-border: #cccccc;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-color: #111111;
+                --text-color: #eeeeee;
+                --card-border: #444444;
+            }
+        }
+
         body {
-            font-family: Arial, sans-serif;
-            margin: 40px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px 40px;
+            background-color: var(--bg-color);
+            color: var(--text-color);
             transition: background-color 0.3s, color 0.3s;
         }
 
-        /* Light mode (default) */
-        body {
-            background-color: #ffffff;
-            color: #222;
-        }
-        table, th, td {
-            border: 1px solid #ccc;
-        }
-        h1, h2 {
-            color: #222;
-        }
-
-        /* Dark mode */
-        @media (prefers-color-scheme: dark) {
-            body {
-                background-color: #111;
-                color: #eee;
-            }
-            table, th, td {
-                border: 1px solid #444;
-            }
-            h1, h2 {
-                color: #fff;
-            }
-        }
-
         .section {
-            margin-bottom: 50px;
+            margin-bottom: 40px;
+            padding: 20px;
+            border-bottom: 1px solid var(--card-border);
         }
+
+        /* Container for Plotly to ensure it fills space */
+        .chart-container {
+            width: 100%;
+            min-height: 400px;
+        }
+
+        h1, h2 { margin-top: 0; }
     </style>
 </head>
 
@@ -53,50 +53,68 @@
 
 <div class="section">
     <h2>Resumen del Último Run</h2>
-    {{latest_summary}}
+    <div id="summary-text">{{latest_summary}}</div>
 </div>
 
 <div class="section">
     <h2>Artículos por Sección (Histórico)</h2>
-    <div class="plotly-graph-div" data-figure='{{section_history_json}}'></div>
+    <div id="chart_history" class="chart-container"></div>
 </div>
 
 <div class="section">
     <h2>Artículos por Día</h2>
-    <div class="plotly-graph-div" data-figure='{{daily_counts_json}}'></div>
+    <div id="chart_daily" class="chart-container"></div>
 </div>
 
 <div class="section">
     <h2>Distribución Total por Sección</h2>
-    <div class="plotly-graph-div" data-figure='{{section_pie_json}}'></div>
+    <div id="chart_pie" class="chart-container"></div>
 </div>
 
-<!-- Theme-aware Plotly rendering -->
 <script>
-    function getTheme() {
+    /** * We use the 'safe' filter (Jinja2) or equivalent to prevent 
+     * the JSON from being turned into &quot; entities.
+     */
+    const rawData = {
+        history: {{ section_history_json | safe }},
+        daily: {{ daily_counts_json | safe }},
+        pie: {{ section_pie_json | safe }}
+    };
+
+    function getPlotlyTheme() {
         return window.matchMedia("(prefers-color-scheme: dark)").matches
             ? "plotly_dark"
             : "plotly_white";
     }
 
     function renderCharts() {
-        document.querySelectorAll(".plotly-graph-div").forEach(div => {
-            let fig = JSON.parse(div.dataset.figure);
+        const currentTheme = getPlotlyTheme();
+        const config = { responsive: true, displayModeBar: false };
 
-            // Merge theme without overwriting layout
-            Plotly.newPlot(div, fig.data, {
-                ...fig.layout,
-                template: getTheme()
-            });
-        });
+        // Helper to merge data, layout, and theme
+        const plot = (elementId, figure) => {
+            if (!figure) return;
+            
+            const layout = {
+                ...figure.layout,
+                template: currentTheme,
+                paper_bgcolor: 'rgba(0,0,0,0)', // Makes background transparent to match CSS
+                plot_bgcolor: 'rgba(0,0,0,0)'
+            };
+
+            Plotly.newPlot(elementId, figure.data, layout, config);
+        };
+
+        plot('chart_history', rawData.history);
+        plot('chart_daily', rawData.daily);
+        plot('chart_pie', rawData.pie);
     }
 
-    renderCharts();
+    // Initial Load
+    window.addEventListener('load', renderCharts);
 
-    // Re-render charts if user switches OS/browser theme
-    window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
-        renderCharts();
-    });
+    // Watch for system theme changes without refreshing page
+    window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", renderCharts);
 </script>
 
 </body>
