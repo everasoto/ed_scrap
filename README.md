@@ -1,2 +1,2 @@
 # ed_scrap
-Automatization of a scrapper for ed
+Automatization of a scraper for ed
