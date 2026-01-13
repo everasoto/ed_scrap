@@ -7,3 +7,4 @@ matplotlib
 seaborn
 jinja2
 plotly
+cloudscraper
