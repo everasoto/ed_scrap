@@ -216,7 +216,7 @@ if len(df) > 0:
 
     # Insert into DB with ON CONFLICT DO NOTHING
     metadata = MetaData()
-    news_articles = Table("news_articles", metadata, autoload_with=engine)
+    news_articles = Table("ed_articles", metadata, autoload_with=engine)
 
     with engine.begin() as conn:
         for _, row in df_diario.iterrows():
@@ -225,3 +225,4 @@ if len(df) > 0:
             conn.execute(stmt)
 
 print("Scraping finished.")
+
