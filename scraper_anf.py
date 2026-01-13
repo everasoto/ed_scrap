@@ -14,7 +14,7 @@ from sqlalchemy.dialects.postgresql import insert
 # --------------------------------------------------
 # DB engine
 # --------------------------------------------------
-engine = create_engine(os.getenv("DATABASE_URL"))  # e.g. postgres://...
+engine = create_engine(os.getenv("SUPABASE_DB_URL"))  # e.g. postgres://...
 
 # --------------------------------------------------
 # Text cleaning function
