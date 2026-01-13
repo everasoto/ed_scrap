@@ -25,7 +25,7 @@ def clean_text(text: str) -> str:
 # -----------------------------
 def load_existing_urls(engine):
     with engine.connect() as conn:
-        result = conn.execute(text("SELECT url FROM news_articles"))
+        result = conn.execute(text("SELECT url FROM ed_articles"))
         return {row[0] for row in result}
 
 # -----------------------------
@@ -225,4 +225,5 @@ if len(df) > 0:
             conn.execute(stmt)
 
 print("Scraping finished.")
+
 
