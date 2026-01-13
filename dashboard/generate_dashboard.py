@@ -10,7 +10,7 @@ db_url = os.getenv("SUPABASE_DB_URL")
 engine = create_engine(db_url)
 
 # Load data
-df = pd.read_sql("SELECT * FROM news_articles", engine)
+df = pd.read_sql("SELECT * FROM ed_articles", engine)
 
 # Convert dates
 df["date"] = pd.to_datetime(df["datetime"])
