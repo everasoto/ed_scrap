@@ -10,6 +10,8 @@ from sqlalchemy import create_engine, MetaData, Table, text
 from sqlalchemy.dialects.postgresql import insert
 import os
 
+SCRAPERAPI_KEY = os.getenv("SCRAPERAPI_KEY")
+
 # -----------------------------
 # Text cleaning function
 # -----------------------------
@@ -35,35 +37,17 @@ def scrape_section_page(url: str, source_name: str = "", existing_urls=None):
     all_news = []
     found_new = False
 
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
-        "Accept-Language": "es-ES,es;q=0.9",
-        "Sec-Fetch-Dest": "document",
-        "Sec-Fetch-Mode": "navigate",
-        "Sec-Fetch-Site": "none",
-        "Sec-Fetch-User": "?1",
-        "Upgrade-Insecure-Requests": "1"
-    }
-    session = requests.Session()
-    session.get("https://www.google.com", headers={"User-Agent": headers["User-Agent"]})
-    print(f"Scraping: {url}")
-    
+    proxy_url = f"http://api.scraperapi.com?api_key={SCRAPERAPI_KEY}&url={url}"
+
+    print(f"Scraping via Proxy: {url}")
     try:
-        response = session.get(url, headers=headers, timeout=15)
-        if response.status_code == 403:
-            print(f"Bloqueo persistente en {url}. La IP de GitHub está marcada.")
-            return all_news, False
-
+        response = requests.get(proxy_url, timeout=30)
+        
         if response.status_code != 200:
-            print(f"Skipping (status {response.status_code})")
+            print(f"Proxy Skipping (status {response.status_code})")
             return all_news, found_new
-            
-    except Exception as e:
-        print(f"Request failed: {e}")
-        return all_news, found_new
 
-    soup = BeautifulSoup(response.text, "html.parser")
+        soup = BeautifulSoup(response.text, \"html.parser\")
     articles = soup.select("article")
 
     for a in articles:
