@@ -39,19 +39,21 @@ def scrape_section_page(url: str, source_name: str = "", existing_urls=None):
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
         "Accept-Language": "es-ES,es;q=0.9",
-        "Referer": "https://www.google.com/",
-        "DNT": "1"
+        "Sec-Fetch-Dest": "document",
+        "Sec-Fetch-Mode": "navigate",
+        "Sec-Fetch-Site": "none",
+        "Sec-Fetch-User": "?1",
+        "Upgrade-Insecure-Requests": "1"
     }
-
+    session = requests.Session()
+    session.get("https://www.google.com", headers={"User-Agent": headers["User-Agent"]})
     print(f"Scraping: {url}")
+    
     try:
-        response = requests.get(url, headers=headers, timeout=15)
+        response = session.get(url, headers=headers, timeout=15)
         if response.status_code == 403:
-            print(f"Bloqueo 403 detectado en {url}. Intentando acceder a la raíz primero...")
-            # A veces entrar a la home primero ayuda a obtener cookies de sesión
-            session = requests.Session()
-            session.get("https://eldeber.com.bo", headers=headers)
-            response = session.get(url, headers=headers, timeout=15)
+            print(f"Bloqueo persistente en {url}. La IP de GitHub está marcada.")
+            return all_news, False
 
         if response.status_code != 200:
             print(f"Skipping (status {response.status_code})")
