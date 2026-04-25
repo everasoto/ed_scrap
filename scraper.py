@@ -10,8 +10,6 @@ from sqlalchemy import create_engine, MetaData, Table, text
 from sqlalchemy.dialects.postgresql import insert
 import os
 
-SCRAPERAPI_KEY = os.getenv("SCRAPERAPI_KEY")
-
 # -----------------------------
 # Text cleaning function
 # -----------------------------
@@ -35,22 +33,29 @@ def load_existing_urls(engine):
 # -----------------------------
 def scrape_section_page(url: str, source_name: str = "", existing_urls=None):
     all_news = []
-    found_new = False
-
-    proxy_url = f"http://api.scraperapi.com?api_key={SCRAPERAPI_KEY}&url={url}"
-
+    api_key = os.getenv("SCRAPERAPI_KEY")
+    
+    # Parámetros para ScraperAPI
+    payload = {'api_key': api_key, 'url': url}
+    
     print(f"Scraping via Proxy: {url}")
     try:
-        response = requests.get(proxy_url, timeout=30)
+        # Pasamos la clave como parámetro
+        response = requests.get('http://api.scraperapi.com', params=payload, timeout=30)
         
+        if response.status_code == 401:
+            print("ERROR 401: API Key de ScraperAPI inválida o no configurada en GitHub Secrets.")
+            return all_news, False
+            
         if response.status_code != 200:
             print(f"Proxy Skipping (status {response.status_code})")
+            return all_news, False
+        except Exception as e:
+            print(f"Request failed: {e}")
             return all_news, found_new
-    except Exception as e: 
-        print(f"Error durante el scraping de {url}: {e}")
-        return all_news, False
 
     soup = BeautifulSoup(response.text, "html.parser")
+        # ... resto de tu lógica ...
     articles = soup.select("article")
 
     for a in articles:
