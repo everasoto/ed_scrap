@@ -46,6 +46,9 @@ def scrape_section_page(url: str, source_name: str = "", existing_urls=None):
         if response.status_code != 200:
             print(f"Proxy Skipping (status {response.status_code})")
             return all_news, found_new
+    except Exception as e: 
+        print(f"Error durante el scraping de {url}: {e}")
+        return all_news, False
 
     soup = BeautifulSoup(response.text, "html.parser")
     articles = soup.select("article")
