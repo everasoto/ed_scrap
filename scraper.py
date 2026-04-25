@@ -47,7 +47,7 @@ def scrape_section_page(url: str, source_name: str = "", existing_urls=None):
             print(f"Proxy Skipping (status {response.status_code})")
             return all_news, found_new
 
-        soup = BeautifulSoup(response.text, \"html.parser\")
+    soup = BeautifulSoup(response.text, "html.parser")
     articles = soup.select("article")
 
     for a in articles:
