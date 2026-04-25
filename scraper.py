@@ -35,12 +35,17 @@ def scrape_section_page(url: str, source_name: str = "", existing_urls=None):
     all_news = []
     found_new = False
 
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    }
+
     print(f"Scraping: {url}")
     try:
-        response = requests.get(url, timeout=10)
+        response = requests.get(url, headers=headers, timeout=10)
         if response.status_code != 200:
             print(f"Skipping (status {response.status_code})")
             return all_news, found_new
+            
     except Exception as e:
         print(f"Request failed: {e}")
         return all_news, found_new
