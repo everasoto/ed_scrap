@@ -42,7 +42,7 @@ def scrape_section_page(url: str, source_name: str = "", existing_urls=None):
 
     print(f"Scraping: {url}")
     try:
-        response = requests.get(url, headers=headers, timeout=15)
+        response = requests.get(url, headers=headers, timeout=10)
         if response.status_code != 200:
             print(f"Skipping (status {response.status_code})")
             return all_news, found_new
