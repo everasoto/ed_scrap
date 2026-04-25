@@ -75,7 +75,9 @@ def scrape_section_page(url: str, source_name: str = "", existing_urls=None):
 # -----------------------------
 # Scrape all pages in sections
 # -----------------------------
-pages = ["pais", "economia", "santa-cruz", "opinion", "mundo", "educacion-y-sociedad"]
+pages = ["pais", "economia", "santa-cruz", "opinion", "mundo", 
+         #"educacion-y-sociedad"
+        ]
 
 def scrape_initial_run(base_url, sections, source_name, num_pages=6, existing_urls=None):
     all_articles = []
