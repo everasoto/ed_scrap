@@ -34,17 +34,22 @@ def load_existing_urls(engine):
 def scrape_section_page(url: str, source_name: str = "", existing_urls=None):
     all_news = []
     api_key = os.getenv("SCRAPERAPI_KEY")
-    payload = {'api_key': api_key, 'url': url}
+    payload = {
+        'api_key': api_key,
+        'url': url,
+        'keep_headers': 'true' # Esto ayuda a que el sitio destino reciba cabeceras válidas
+    }
 
     print(f"Scraping via Proxy: {url}")
     
     try:
-        # Todo lo que esté aquí adentro debe tener 4 espacios de sangría
-        response = requests.get('http://api.scraperapi.com', params=payload, timeout=30)
+        # 3. Pasar 'params=payload' (Esto evita errores de sintaxis en la URL)
+        response = requests.get('http://api.scraperapi.com', params=payload, timeout=60)
         
-        if response.status_code != 200:
-            print(f"Proxy Skipping (status {response.status_code})")
-            return all_news, False
+        if response.status_code == 401:
+            print("ERROR: API Key inválida. Revisa tus Secrets en GitHub.")
+        elif response.status_code == 404:
+            print(f"ERROR 404: ScraperAPI no encuentra la URL o la Key es incorrecta. URL: {url}")
 
         soup = BeautifulSoup(response.text, "html.parser")
         # ... tu lógica de extracción ...
