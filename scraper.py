@@ -34,6 +34,14 @@ def load_existing_urls(engine):
 def scrape_section_page(url: str, source_name: str = "", existing_urls=None):
     all_news = []
     api_key = os.getenv("SCRAPERAPI_KEY")
+
+    api_key = os.getenv("SCRAPERAPI_KEY")
+    if not api_key:
+        print("CRÍTICO: La variable SCRAPERAPI_KEY está vacía (None).")
+    else:
+        # Muestra los primeros 4 caracteres para confirmar que se lee algo, sin exponer tu clave
+        print(f"API Key detectada (inicio): {api_key[:4]}****")
+        
     payload = {
         'api_key': api_key,
         'url': url,
