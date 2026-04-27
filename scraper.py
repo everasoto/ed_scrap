@@ -33,63 +33,64 @@ def load_existing_urls(engine):
 # -----------------------------
 def scrape_section_page(url: str, source_name: str = "", existing_urls=None):
     all_news = []
+    found_new = False
     api_key = os.getenv("SCRAPERAPI_KEY")
 
-    api_key = os.getenv("SCRAPERAPI_KEY")
     if not api_key:
         print("CRÍTICO: La variable SCRAPERAPI_KEY está vacía (None).")
+        return all_news, found_new
     else:
-        # Muestra los primeros 4 caracteres para confirmar que se lee algo, sin exponer tu clave
         print(f"API Key detectada (inicio): {api_key[:4]}****")
         
     payload = {
         'api_key': api_key,
         'url': url,
-        'keep_headers': 'true' # Esto ayuda a que el sitio destino reciba cabeceras válidas
+        'keep_headers': 'true'
     }
 
     print(f"Scraping via Proxy: {url}")
     
     try:
-        # 3. Pasar 'params=payload' (Esto evita errores de sintaxis en la URL)
         response = requests.get('http://api.scraperapi.com', params=payload, timeout=60)
         
         if response.status_code == 401:
-            print("ERROR: API Key inválida. Revisa tus Secrets en GitHub.")
+            print("ERROR 401: API Key inválida. Revisa tus Secrets en GitHub.")
+            return all_news, found_new
         elif response.status_code == 404:
             print(f"ERROR 404: ScraperAPI no encuentra la URL o la Key es incorrecta. URL: {url}")
+            return all_news, found_new
+        elif response.status_code != 200:
+            print(f"ERROR {response.status_code}: Error desconocido en el proxy.")
+            return all_news, found_new
 
         soup = BeautifulSoup(response.text, "html.parser")
-        # ... tu lógica de extracción ...
+        articles = soup.select("article")
 
-    except Exception as e: # <--- ESTA LÍNEA DEBE ESTAR ALINEADA CON EL 'try'
-        print(f"Error: {e}")
-        return all_news, False
+        for a in articles:
+            title_tag = a.find("h2") or a.find("h3") or a.find("a")
+            link_tag = a.find("a")
 
-    soup = BeautifulSoup(response.text, "html.parser")
-    articles = soup.select("article")
+            title = clean_text(title_tag.get_text(strip=True)) if title_tag else ""
+            raw_link = link_tag["href"] if link_tag and link_tag.has_attr("href") else ""
+            link = clean_text(urljoin(url, raw_link))
 
-    for a in articles:
-        title_tag = a.find("h2") or a.find("h3") or a.find("a")
-        link_tag = a.find("a")
+            if not title or not link:
+                continue
 
-        title = clean_text(title_tag.get_text(strip=True)) if title_tag else ""
-        raw_link = link_tag["href"] if link_tag and link_tag.has_attr("href") else ""
-        link = clean_text(urljoin(url, raw_link))
+            if existing_urls and link in existing_urls:
+                continue
 
-        if not title or not link:
-            continue
+            found_new = True
+            all_news.append({
+                "title": title,
+                "link": link,
+                "snapshot_date": datetime.now().date(),
+                "source": source_name
+            })
 
-        if existing_urls and link in existing_urls:
-            continue  # skip already saved articles
-
-        found_new = True
-        all_news.append({
-            "title": title,
-            "link": link,
-            "snapshot_date": datetime.now().date(),
-            "source": source_name
-        })
+    except Exception as e:
+        print(f"Error inesperado durante el scraping de {url}: {e}")
+        return all_news, found_new
 
     return all_news, found_new
 
