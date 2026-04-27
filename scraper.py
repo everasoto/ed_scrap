@@ -227,11 +227,13 @@ if len(df) > 0:
 
     # Date parsing
     df_diario["weekday"] = df_diario["date_extracted"].str.split(",", n=1).str[0].str.strip()
-    df_diario["datetime"] = df_diario["date_extracted"].str.split(",", n=1).str[1].str.strip()
-    df_diario["datetime"] = df_diario["datetime"].apply(parse_fecha)
+    raw_datetime = df_diario["date_extracted"].str.split(",", n=1).str[1].str.strip()
+    df_diario["datetime"] = raw_datetime.apply(parse_fecha)
+    df_diario["datetime"] = df_diario["datetime"].fillna(pd.Timestamp.now())
     df_diario["date"] = df_diario["datetime"].dt.date
     df_diario["hour"] = df_diario["datetime"].dt.hour
     df_diario["snapshot_date"] = datetime.now().date()
+    df_diario = df_diario.replace({pd.NaT: None, np.nan: None})
 
     # Section extraction
     df_diario["section_url"] = df_diario["url"].apply(extract_section)
