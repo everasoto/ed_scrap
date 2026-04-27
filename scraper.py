@@ -123,9 +123,19 @@ def scrape_initial_run(base_url, sections, source_name, num_pages=6, existing_ur
 # Full article extraction
 # -----------------------------
 def extract_full_article(url: str) -> dict:
+    api_key = os.getenv("SCRAPERAPI_KEY")
+
+    payload = {
+        'api_key': api_key,
+        'url': url,
+        'keep_headers': 'true'
+    }
+
     try:
-        response = requests.get(url, timeout=10)
+        response = requests.get('http://api.scraperapi.com', params=payload, timeout=60)
+        
         if response.status_code != 200:
+            print(f"Error nivel 2 en {url}: Status {response.status_code}")
             return {"headline":"", "date_extracted":"", "author":"", "subheadline":"", "content":"", "url":url}
 
         soup = BeautifulSoup(response.text, "html.parser")
@@ -133,21 +143,34 @@ def extract_full_article(url: str) -> dict:
         h1 = soup.find("h1")
         headline = clean_text(h1.get_text(strip=True)) if h1 else ""
 
-        date_tag = soup.find("div", class_="articulo__fecha")
+        date_tag = soup.find("time") or soup.find("div", class_="articulo__fecha")
         date = clean_text(date_tag.get_text(strip=True)) if date_tag else ""
 
-        authors = soup.find("p", class_="autor__firmante")
-        author = clean_text(authors.get_text(" ", strip=True)) if authors else ""
+        authors = soup.find("p", class_="autor__firmante") or soup.select_one(".articulo__autor")
+        author = clean_text(authors.get_text(" ", strip=True)) if authors else "Redacción El Deber"
 
         subheadlines = soup.find("div", class_="articulo__intro")
         subheadline = clean_text(subheadlines.get_text(" ", strip=True)) if subheadlines else ""
 
-        contents = soup.find("main", class_="articulo__cuerpo")
-        content = clean_text(contents.get_text(" ", strip=True)) if contents else ""
+        contents = soup.select_one("div.articulo__body") or soup.find("main", class_="articulo__cuerpo")
+        
+        if contents:
+            paragraphs = contents.find_all("p")
+            content = clean_text(" ".join([p.get_text(strip=True) for p in paragraphs]))
+        else:
+            content = ""
 
-        return {"headline":headline, "date_extracted":date, "author":author, "subheadline":subheadline, "content":content, "url":url}
+        return {
+            "headline": headline, 
+            "date_extracted": date, 
+            "author": author, 
+            "subheadline": subheadline, 
+            "content": content, 
+            "url": url
+        }
 
-    except Exception:
+    except Exception as e:
+        print(f"Excepción en nivel 2 para {url}: {e}")
         return {"headline":"", "date_extracted":"", "author":"", "subheadline":"", "content":"", "url":url}
 
 # -----------------------------
