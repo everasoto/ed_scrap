@@ -2,6 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 import pandas as pd
 import numpy as np
+import random
 import time
 import re
 import unicodedata
@@ -35,33 +36,40 @@ def load_existing_urls(engine):
 def scrape_section_page(url: str, source_name: str = "", existing_urls=None):
     all_news = []
     found_new = False
-    api_key = os.getenv("SCRAPERAPI_KEY")
+    
+    # List of common browser User-Agents to appear like a human visitor
+    user_agents = [
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
+        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
+        "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:122.0) Gecko/20100101 Firefox/122.0"
+    ]
 
-    if not api_key:
-        print("CRÍTICO: La variable SCRAPERAPI_KEY está vacía (None).")
-        return all_news, found_new
-    else:
-        print(f"API Key detectada (inicio): {api_key[:4]}****")
-        
-    payload = {
-        'api_key': api_key,
-        'url': url,
-        'keep_headers': 'true'
+    headers = {
+        "User-Agent": random.choice(user_agents),
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,webp,*/*;q=0.8",
+        "Accept-Language": "es-ES,es;q=0.9,en;q=0.8",
+        "Referer": "https://www.google.com/",
+        "DNT": "1", # Do Not Track
+        "Connection": "keep-alive",
+        "Upgrade-Insecure-Requests": "1"
     }
 
-    print(f"Scraping via Proxy: {url}")
+    # Add a random human-like delay (2 to 5 seconds) before the request
+    # This prevents the server from flagging your Ubuntu IP for rapid access
+    time.sleep(random.uniform(2.0, 5.0))
+
+    print(f"Scraping Direct (Stealth Mode): {url}")
     
     try:
-        response = requests.get('http://api.scraperapi.com', params=payload, timeout=60)
+        # NOTICE: No proxy URL here. We request the page directly.
+        response = requests.get(url, headers=headers, timeout=30)
         
-        if response.status_code == 401:
-            print("ERROR 401: API Key inválida. Revisa tus Secrets en GitHub.")
-            return all_news, found_new
-        elif response.status_code == 404:
-            print(f"ERROR 404: ScraperAPI no encuentra la URL o la Key es incorrecta. URL: {url}")
+        if response.status_code == 403:
+            print(f"ERROR 403: Access Denied. You may need to increase the sleep time or use a VPN.")
             return all_news, found_new
         elif response.status_code != 200:
-            print(f"ERROR {response.status_code}: Error desconocido en el proxy.")
+            print(f"ERROR {response.status_code}: Direct request failed for {url}")
             return all_news, found_new
 
         soup = BeautifulSoup(response.text, "html.parser")
